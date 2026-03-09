@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>51 İK Metriği Sözlüğü - AIHR Veri Tabanlı</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter Font'u kullanmak için stil */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Başlık Bölümü -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-800 mb-2">
+                İK Metrikleri
+            </h1>
+            <p class="text-xl text-slate-600">
+                Veri odaklı İK Profesyonelleri için en önemli metrikler
+            </p>
+            <div class="mt-4 inline-block px-4 py-1 text-sm font-medium rounded-full bg-teal-100 text-teal-700">
+                Kaynaklar: AIHR HR Metrics Cheat Sheet & 19 HR Metrics Examples
+            </div>
+        </header>
+
+        <!-- Arama ve Filtreleme -->
+        <div class="mb-8 p-6 bg-white rounded-xl shadow-lg border border-slate-200">
+            <input type="text" id="searchInput" placeholder="Metrik adı, formülü veya açıklaması içinde arama yapın..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" onkeyup="filterMetrics()">
+            
+            <div class="mt-4 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                <label for="categoryFilter" class="block text-slate-600 font-medium whitespace-nowrap pt-2">Kategoriye Göre Filtrele:</label>
+                <select id="categoryFilter" class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" onchange="filterMetrics()">
+                    <option value="all">Tüm Kategoriler</option>
+                    <option value="HR Performance">İK Performans Metrikleri</option>
+                    <option value="General Workforce">Genel İş Gücü Metrikleri</option>
+                    <option value="Recruitment">İşe Alım Metrikleri</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Metrik Listesi -->
+        <div id="metricsList" class="space-y-6">
+            <!-- Metrik Kartları JavaScript ile buraya eklenecek -->
+        </div>
+
+        <!-- JavaScript Alanı -->
+        <script>
+            // PDF dosyalarından çıkarılan metrik verileri ve ZENGİNLEŞTİRİLMİŞ AÇIKLAMALAR
+            const metricsData = [
+                // İK PERFORMANS METRİKLERİ (HR PERFORMANCE METRICS)
+                { 
+                    category: "HR Performance", id: 1, name: "Çalışan Başına Gelir (Revenue per employee)", 
+                    formula: "Toplam Gelir / Toplam Çalışan Sayısı", 
+                    sampleData: "Örn: 2.000.000 TL / 50 Çalışan = 40.000 TL",
+                    description: "Kuruluşun bir bütün olarak verimliliğini gösteren ve işgücü kalitesinin bir göstergesi olan metriktir.",
+                    importance: "Yıl bazında gelişimi ve rakiplerle kıyaslamayı sağlamak için önemlidir. Yüksek değer, verimli işgücünü işaret eder.",
+                },
+                { category: "HR Performance", id: 2, name: "FTE (Tam Zamanlı Çalışan) Başına Gelir (Revenue per FTE)", formula: "Toplam Gelir / Toplam FTE Sayısı", sampleData: "Örn: 2.000.000 TL / 45.5 FTE = 43.956 TL", description: "Çalışan Başına Gelirin (Revenue per employee) daha doğru bir varyasyonudur.", importance: "Yarı zamanlı çalışanların etkisini ortadan kaldırarak işgücü verimliliğini daha adil ölçer." },
+                { category: "HR Performance", id: 3, name: "Çalışan Başına Kar (Profit per employee)", formula: "Toplam Kar / Toplam Çalışan Sayısı", sampleData: "Örn: 400.000 TL / 50 Çalışan = 8.000 TL", description: "Çalışan başına düşen net finansal getiriyi ölçer.", importance: "İşgücünün finansal performansa doğrudan katkısını gösterir." },
+                { category: "HR Performance", id: 4, name: "FTE Başına Kar (Profit per FTE)", formula: "Toplam Kar / Toplam FTE Sayısı", sampleData: "Örn: 400.000 TL / 45.5 FTE = 8.791 TL", description: "FTE bazında net finansal getiriyi ölçer.", importance: "Çalışan Başına Kar metriğine göre daha kesin bir verimlilik göstergesidir." },
+                { 
+                    category: "HR Performance", id: 5, name: "Çalışan Başına Fazla Mesai (Overtime per employee)", 
+                    formula: "Fazla Mesai Saatleri / (Sözleşmeli Saatler + Fazla Mesai) Toplam Saatler", 
+                    sampleData: "Örn: 100 Saat / 8100 Saat = %1.23", 
+                    description: "Çalışanların normal çalışma saatleri dışındaki çalışma saatlerinin yüzdesi.", 
+                    importance: "Yüksek fazla mesai oranları, personel yetersizliğini, verimsiz planlamayı veya yüksek tükenmişlik (burnout) riskini işaret eder. Giderler (16) ile yakından ilişkilidir.", 
+                },
+                { category: "HR Performance", id: 6, name: "Çalışan Başına İş Gücü Maliyeti (Labor cost per employee)", formula: "Toplam İş Gücü Maliyeti / Toplam Çalışan Sayısı", sampleData: "Örn: 600.000 TL / 50 Çalışan = 12.000 TL", description: "Bir çalışanın şirkete yıllık ortalama maliyetini gösterir.", importance: "Maliyet optimizasyonu ve bütçeleme için kritik bir metriktir." },
+                { category: "HR Performance", id: 7, name: "FTE Başına İş Gücü Maliyeti (Labor cost per FTE)", formula: "Toplam İş Gücü Maliyeti / FTE", sampleData: "Örn: 600.000 TL / 45.5 FTE = 13.187 TL", description: "FTE bazında iş gücü maliyetini hesaplar.", importance: "Maliyet etkinliğini daha doğru bir şekilde değerlendirir." },
+                { category: "HR Performance", id: 8, name: "Gelirin İş Gücü Maliyeti Yüzdesi (Labor cost % of revenue)", formula: "Toplam İş Gücü Maliyeti / Kurumsal Gelir", sampleData: "Örn: 600.000 TL / 2.000.000 TL = %30", description: "Gelirinizin ne kadarının personel giderlerine harcandığını gösterir.", importance: "Finansal sağlığın ve maliyet kontrolünün ana göstergelerindendir." },
+                { category: "HR Performance", id: 9, name: "Toplam Giderin İş Gücü Maliyeti Yüzdesi (Labor cost % of total expenses)", formula: "Toplam İş Gücü Maliyeti / Toplam Kurumsal Giderler", sampleData: "Örn: 600.000 TL / 1.500.000 TL = %40", description: "Toplam giderler içinde işgücü maliyetinin payını gösterir.", importance: "Maliyetleri optimize etmek ve stratejik planlamayı desteklemek için önemlidir." },
+                { 
+                    category: "HR Performance", id: 10, name: "Devamsızlık Oranı (Absenteeism rate)", 
+                    formula: "Devamsızlık Gün Sayısı / Toplam Çalışma Gün Sayısı", 
+                    sampleData: "Örn: 50 Gün / 1000 Gün = %5", 
+                    description: "Çalışanların planlanmamış işten uzak kalma sıklığı ve süresi. (14. Metrik ile aynı)", 
+                    importance: "Düşük çalışan memnuniyetinin ve işten ayrılma potansiyelinin güçlü bir göstergesidir. Uzun süreli devamsızlıklar çok maliyetli olabilir.", 
+                },
+                { category: "HR Performance", id: 11, name: "Yönetici/Departman Başına Devamsızlık Oranı (Absence rate per manager/department)", formula: "Birim Başına Devamsızlık Gün Sayısı / Birim Başına Toplam Çalışma Gün Sayısı", sampleData: "Örn: 5 Gün (Paz.) / 100 Gün (Paz.) = %5", description: "Departmanlar arasındaki farkları ortaya çıkarır.", importance: "Potansiyel yönetim veya iş yükü sorunlarını belirlemek için kritik bir araçtır." },
+                { category: "HR Performance", id: 12, name: "Dönem Başına Fazla Mesai Gideri (Overtime expense per period)", formula: "Fazla Mesai Ödemesi / Dönem Başına Toplam Ödeme", sampleData: "Örn: 50.000 TL / 500.000 TL = %10", description: "Dönemlik toplam maaş ödemesi içindeki fazla mesai payı.", importance: "Maliyet kontrolü ve verimlilik planlaması için önemlidir. (16. Metrik ile aynıdır)" },
+                { 
+                    category: "HR Performance", id: 13, name: "Çalışan Başına Eğitim Gideri (Training expenses per employee)", 
+                    formula: "Eğitim Giderleri / Çalışan Sayısı", 
+                    sampleData: "Örn: 10.000 TL / 50 Çalışan = 200 TL", 
+                    description: "Kuruluşun her bir çalışanın gelişimine yaptığı ortalama yatırım miktarı. (15. Metrik ile aynı)", 
+                    importance: "İşgücünün beceri ve yetkinliklerinin geliştirilmesine yapılan yatırımın anlaşılması için anahtardır.", 
+                },
+                { category: "HR Performance", id: 14, name: "Eğitim Verimliliği (Training efficiency)", formula: "Çalışan Başına Eğitim Giderleri / Eğitim Etkinliği", sampleData: "Örn: 200 TL / 0.8 Etkinlik Puanı = 250", description: "Eğitime harcanan paranın sağladığı fayda (etkinlik puanı) ile ilişkisini ölçer.", importance: "Eğitim bütçesinin optimize edilmesini ve en iyi ROI'yi sağlayan programların belirlenmesini sağlar." },
+                { category: "HR Performance", id: 15, name: "Gönüllü İşten Ayrılma Oranı (Voluntary turnover rate)", formula: "Dönemdeki Gönüllü Ayrılma Sayısı / Dönem Başındaki Çalışan Sayısı", sampleData: "Örn: 3 Ayrılma / 50 Çalışan = %6", description: "Kendi isteğiyle ayrılan çalışanların yüzdesi.", importance: "Çalışan memnuniyetini, bağlılığını ve elde tutma stratejilerinin etkinliğini gösterir." },
+                { category: "HR Performance", id: 16, name: "Zorunlu İşten Ayrılma Oranı (Involuntary turnover rate)", formula: "Dönemdeki Zorunlu Ayrılma Sayısı / Dönem Başındaki Çalışan Sayısı", sampleData: "Örn: 1 Ayrılma / 50 Çalışan = %2", description: "Şirket tarafından işten çıkarılan çalışanların yüzdesi.", importance: "Performans yönetim süreçlerinin etkinliğini ve İK politikalarının uygulanmasını değerlendirmeye yardımcı olur." },
+                { category: "HR Performance", id: 17, name: "Yetenek İşten Ayrılma Oranı (Turnover rate of talent)", formula: "Dönemdeki Yüksek Potansiyelli Ayrılma Sayısı / Dönem Başındaki Çalışan Sayısı", sampleData: "Örn: 1 YP Ayrılma / 10 YP Çalışan = %10", description: "En değerli çalışanların (yüksek potansiyellerin) ayrılma yüzdesi.", importance: "Şirketin gelecekteki liderlik potansiyeli ve yetenek yönetimi risklerini gösterir. Yüksek olması çok tehlikelidir." },
+                { 
+                    category: "HR Performance", id: 18, name: "İşten Ayrılma Oranı (Turnover rate)", 
+                    formula: "Dönemdeki Ayrılma Sayısı / Dönem Başındaki Çalışan Sayısı", 
+                    sampleData: "Örn: 4 Ayrılma / 50 Çalışan = %8", 
+                    description: "Belirli bir dönemde şirketten ayrılan tüm çalışanların yüzdesi. (5. Metrik ile aynı)", 
+                    importance: "Genel iş gücü istikrarını gösterir. Yüksek performanslı ve düşük performanslı ayrılma farklarını takip etmek önemlidir.", 
+                },
+                { category: "HR Performance", id: 19, name: "Yönetici/Departman Başına İşten Ayrılma Oranı (Turnover rate per manager/department)", formula: "Birimdeki Ayrılma Sayısı / Dönem Başındaki Birim Çalışan Sayısı", sampleData: "Örn: 2 Ayrılma (Satış) / 10 Çalışan (Satış) = %20", description: "Departmanlar veya yöneticiler arası ayrılma oranlarındaki farklılıkları ölçer.", importance: "Kötü yönetimin veya toksik takım kültürünün kaynaklarını belirlemeye yardımcı olur." },
+                { category: "HR Performance", id: 20, name: "Devamsızlık Maliyeti (Cost of absenteeism)", formula: "Toplam Devamsızlık Maliyeti (Kayıp Saat + Yönetici Saati + Diğer Maliyetler)", sampleData: "Örn: 500 saat * 50 TL/saat + 50 saat * 70 TL/saat + 1000 TL (Diğer) = 29.500 TL", description: "Planlanmamış devamsızlığın kuruluşa olan toplam finansal yükünü hesaplar.", importance: "Devamsızlığa karşı önleyici programların (sağlık, esenlik) maliyet etkinliğini ölçmek için kullanılır." },
+                { category: "HR Performance", id: 21, name: "İşten Ayrılma Maliyeti (Cost of turnover)", formula: "Toplam İşten Ayrılma Maliyeti (SHRM Excel'e bakınız)", sampleData: "Örn: İşe Alım Maliyeti + Eğitim Maliyeti + Kayıp Verimlilik = 8.000 TL", description: "Bir çalışanın yerine yenisini bulma, işe alma, eğitme ve adaptasyon sürecinin maliyetini hesaplar.", importance: "İşe alım başarısızlığını (4. Erken Ayrılma Metriği ile ilgili) ve elde tutma stratejilerinin değerini belirler." },
+                { 
+                    category: "HR Performance", id: 22, name: "İK/Çalışan Oranı (HR to employee ratio)", 
+                    formula: "İK'da Çalışan FTE / Toplam FTE Sayısı", 
+                    sampleData: "Örn: 2 FTE / 45.5 FTE = 1:22.75", 
+                    description: "Kuruluştaki her bir İK profesyoneline düşen çalışan sayısı. (11. Metrik ile aynı)", 
+                    importance: "İK departmanının verimliliğini ve iş yükünü gösterir. Ortalama 1:50 veya %2 civarındadır.", 
+                },
+                { category: "HR Performance", id: 23, name: "FTE Başına İK Maliyeti (HR cost per FTE)", formula: "Toplam İK Maliyeti / Toplam FTE Sayısı", sampleData: "Örn: 150.000 TL / 45.5 FTE = 3.296 TL", description: "İK operasyonlarının bir FTE'ye olan ortalama maliyeti.", importance: "İK fonksiyonunun maliyet etkinliğini takip etmeye yardımcı olur." },
+                { 
+                    category: "HR Performance", id: 24, name: "Terfiye Kadar Geçen Süre (Time until promotion)", 
+                    formula: "Terfiye Kadar Geçen Ortalama Süre (Ay veya Yıl)", 
+                    sampleData: "Örn: 300 Ay / 10 Terfi = Ortalama 30 Ay", 
+                    description: "Bir çalışanın son terfisinden bu yana geçen ortalama süre. (6. Metrik ile aynı)", 
+                    importance: "Yüksek potansiyelli çalışanların neden ayrıldığını (17) anlamada kritik öneme sahiptir. Uzun süre terfi alamayan yetenekler ayrılmaya meyillidir.", 
+                },
+                { category: "HR Performance", id: 25, name: "Terfi Oranı (Promotion rate)", formula: "Terfi Eden Çalışan Sayısı / Kadro Sayısı (Headcount)", sampleData: "Örn: 5 Terfi / 50 Çalışan = %10", description: "Belirli bir dönemde terfi alan çalışanların yüzdesi.", importance: "Şirketin yetenek gelişimine verdiği önemi ve iç hareketlilik kültürünü gösterir." },
+
+                // GENEL İŞ GÜCÜ METRİKLERİ (GENERAL WORKFORCE METRICS)
+                { category: "General Workforce", id: 26, name: "Ortalama Yaş (Average age)", formula: "Tüm Çalışanların Yaşları Toplamı / Kadro Sayısı (Headcount)", sampleData: "Örn: 1800 Yaş Toplamı / 50 Çalışan = 36 Yaş", description: "İşgücünün demografik yapısını gösteren basit bir ölçümdür.", importance: "Emeklilik planlaması (28. Metrik) ve ardıllık planlaması için önemlidir." },
+                { category: "General Workforce", id: 27, name: "Ortalama Hizmet Süresi (Average length of service)", formula: "Tüm Çalışanların Hizmet Süreleri Toplamı / Kadro Sayısı (Headcount)", sampleData: "Örn: 250 Yıl Toplamı / 50 Çalışan = 5 Yıl", description: "Çalışanların şirkette geçirdiği ortalama süredir.", importance: "Elde tutma başarısını ve kurumsal bilgi birikimini koruma yeteneğini gösterir." },
+                { category: "General Workforce", id: 28, name: "Emeklilik Oranı (Retirement rate)", formula: "Dönemde Emekli Olan Çalışan Sayısı / Dönem Başındaki Kadro Sayısı", sampleData: "Örn: 2 Emekli / 50 Çalışan = %4", description: "Belirli bir dönemde emekli olan çalışanların yüzdesi.", importance: "İşgücü planlaması ve boş pozisyonları doldurmak için gereken zamanın (33, 34) tahmini açısından kritik öneme sahiptir." },
+                { category: "General Workforce", id: 29, name: "Evden Ortalama Mesafe (Average distance from home)", formula: "Evden Ortalama Mesafe (Mil veya km)", sampleData: "Örn: 500 km Toplam Mesafe / 50 Çalışan = 10 km", description: "Çalışanların iş yerine olan ortalama seyahat mesafesi.", importance: "İşe geliş-gidiş maliyetini ve çalışan memnuniyetini (31) etkileyebilir." },
+                { 
+                    category: "General Workforce", id: 30, name: "Bağlılık Oranı (Engagement rate)", 
+                    formula: "Dönemde Bağlılık Normunun Üzerindeki Çalışan Sayısı / Dönem Başındaki Kadro Sayısı", 
+                    sampleData: "Örn: 40 Çalışan / 50 Çalışan = %80", 
+                    description: "İşine ve şirkete duygusal ve motivasyonel olarak bağlı olan çalışanların yüzdesi. (17. Metrik ile ilgili)", 
+                    importance: "Bağlı işgücü daha üretken, daha az devamsızlık yapar ve işten ayrılma oranı düşüktür. Genellikle eNPS ile ifade edilir.", 
+                },
+                { 
+                    category: "General Workforce", id: 31, name: "Memnuniyet Oranı (Satisfaction rate)", 
+                    formula: "İşinden Memnun Olduğunu Bildiren Kişi Sayısı / Toplam Kişi Sayısı", 
+                    sampleData: "Örn: 42 Kişi / 50 Kişi = %84", 
+                    description: "Çalışanların işlerinden, çalışma ortamlarından ve kuruluştan ne kadar mutlu ve memnun oldukları. (18. Metrik ile ilgili)", 
+                    importance: "Anketler aracılığıyla ölçülür ve iş-yaşam dengesi, yönetim etkinliği gibi konularda bilgi verir.", 
+                },
+                { category: "General Workforce", id: 32, name: "Geçen Yıla Göre Maaş Artışı (Salary hike since last year)", formula: "(Mevcut Maaş - Önceki Yıl Maaşı) / Önceki Yıl Maaşı", sampleData: "Örn: (15.000 TL - 12.000 TL) / 12.000 TL = %25", description: "Çalışan maaşlarındaki yıllık ortalama artış yüzdesi.", importance: "Piyasa rekabetçiliğini ve çalışanların satın alma gücünü koruma çabasını gösterir." },
+
+                // İŞE ALIM METRİKLERİ (RECRUITMENT METRICS)
+                { 
+                    category: "Recruitment", id: 33, name: "Doldurma Süresi (Time to fill)", 
+                    formula: "İlan Yayınlama ile Adayı İşe Alma Arasındaki Gün Sayısı", 
+                    sampleData: "Örn: 60 Gün (Yazılım) / 1 İşe Alım = 60 Gün", 
+                    description: "İş ilanı onayından adayın iş teklifini kabul etmesine kadar geçen gün sayısı. (SHRM ve ISO 30414 tanımına uygun)", 
+                    importance: "İşe alım sürecinin hızını ve etkinliğini gösterir. Uzun süreler, kaybedilen adaylara ve iş kaybına neden olabilir.", 
+                },
+                { 
+                    category: "Recruitment", id: 34, name: "İşe Alma Süresi (Time to hire)", 
+                    formula: "Adaya Yaklaşma ile İş Teklifini Kabul Etme Arasındaki Gün Sayısı", 
+                    sampleData: "Örn: 45 Gün (Aday İletişimi) / 1 İşe Alım = 45 Gün", 
+                    description: "Bir adayın işe başvurmasından iş teklifini kabul etmesine kadar geçen gün sayısı. (1. Metrik ile aynı)", 
+                    importance: "Aday deneyimi ve İK süreçlerinin verimliliği hakkında bilgi verir. Uzun süre, adayların rakip firmalara gitmesine neden olabilir.", 
+                },
+                { 
+                    category: "Recruitment", id: 35, name: "İşe Alma Başına Maliyet (Cost per hire)", 
+                    formula: "Toplam İşe Alma Maliyeti / Yeni İşe Alım Sayısı", 
+                    sampleData: "Örn: 20.000 TL / 5 İşe Alım = 4.000 TL", 
+                    description: "Yeni bir çalışanı işe almanın şirkete maliyetini gösterir. (2. ve 44. Metrikler ile aynıdır.)", 
+                    importance: "İşe alım sürecinin verimliliğini gösterir. İç ve dış işe alım maliyetlerini (reklam, teknoloji, personel) içerir.", 
+                },
+                { category: "Recruitment", id: 36, name: "İşe Alma Kaynağı (Source of hire)", formula: "İşe Alınan Adayı Çekmek İçin Kullanılan Kaynak Kanalı", sampleData: "Örn: LinkedIn, Kariyer Portalları, Referanslar", description: "En iyi performansı gösteren adayların hangi kanaldan geldiğini belirler.", importance: "İşe alım bütçesinin en verimli kanallara yönlendirilmesini sağlar." },
+                { 
+                    category: "Recruitment", id: 37, name: "İlk Yıl İstifa Oranı (First-year resignation rate)", 
+                    formula: "1 Yıl İçinde Ayrılan Çalışanlar / Kadro Sayısı", 
+                    sampleData: "Örn: 1 Erken Ayrılma / 50 Çalışan = %2", 
+                    description: "İlk yıl içinde ayrılan yeni işe alımların yüzdesi. (4. Metrik ile ilgili)", 
+                    importance: "İşe alım ve uyum (onboarding) başarısızlığını gösteren en önemli metriklerden biridir. Yüksek maliyetlidir.", 
+                },
+                { category: "Recruitment", id: 38, name: "İlk Yıl İşten Ayrılma Oranı (First-year turnover rate)", formula: "1 Yıl İçinde Ayrılan Çalışanlar / Toplam İşe Alım Sayısı", sampleData: "Örn: 1 Erken Ayrılma / 5 Yeni İşe Alım = %20", description: "İlk yıl içinde ayrılan yeni işe alımların toplam yeni işe alım sayısına oranı.", importance: "İşe alım sürecindeki uyumsuzlukları (kişi-şirket veya kişi-pozisyon) gösterir." },
+                { category: "Recruitment", id: 39, name: "İlk Ay İşten Ayrılma Oranı (First-month turnover rate)", formula: "1 Ay İçinde Ayrılan Çalışanlar / Toplam İşe Alım Sayısı", sampleData: "Örn: 0 Erken Ayrılma / 5 Yeni İşe Alım = %0", description: "İlk ay içinde ayrılan yeni işe alımların oranı.", importance: "Çok yüksek bir maliyet ve ciddi bir uyum (onboarding) veya beklenti yönetimi sorununu işaret eder. Hedef %0 olmalıdır." },
+                { category: "Recruitment", id: 40, name: "İşe Alan Yönetici Memnuniyeti (Hiring manager satisfaction)", formula: "İyi Performans Gösteren İşe Alım Sayısı / Toplam İşe Alım Sayısı", sampleData: "Örn: 4 İyi Performans / 5 İşe Alım = %80", description: "Yeni işe alınanların performansına göre yöneticilerin memnuniyetini ölçer.", importance: "İşe alım kalitesinin (3. Metrik ile ilgili) subjektif bir göstergesidir." },
+                { category: "Recruitment", id: 41, name: "Aday İş Memnuniyeti (Candidate job satisfaction)", formula: "Yeni İşinden Memnun Olan İşe Alım Sayısı / Toplam İşe Alım Sayısı", sampleData: "Örn: 4 Memnun Aday / 5 İşe Alım = %80", description: "Yeni işe alınanların yeni rollerinden duydukları memnuniyeti ölçer.", importance: "İşe alım kalitesinin ve elde tutma potansiyelinin erken bir göstergesidir." },
+                { category: "Recruitment", id: 42, name: "Açık Pozisyon Başına Başvuru (Applicants per opening)", formula: "Toplam Başvuru Sayısı / Açık Pozisyon Sayısı", sampleData: "Örn: 500 Başvuru / 5 Açık Pozisyon = 100 Başvuru", description: "Bir pozisyona ortalama kaç adayın başvurduğunu gösterir.", importance: "İşverenin çekiciliğini (Employer Branding) ve ilanın ulaşım başarısını gösterir." },
+                { category: "Recruitment", id: 43, name: "Seçim Oranı (Selection ratio)", formula: "İşe Alınan Aday Sayısı / Toplam Aday Sayısı", sampleData: "Örn: 5 İşe Alım / 500 Aday = 1:100", description: "Başvuran adaylar arasından işe alınanların oranı.", importance: "Seçim sürecinin ne kadar seçici olduğunu gösterir. Düşük oran, daha iyi bir havuz olduğunu gösterebilir." },
+                { category: "Recruitment", id: 44, name: "İşe Alma Başına Maliyet (Cost per hire - detaylı)", formula: "(Toplam İç Maliyet + Toplam Dış Maliyet) / Toplam İşe Alım Sayısı", sampleData: "Örn: (10.000 TL İç + 10.000 TL Dış) / 5 İşe Alım = 4.000 TL", description: "İşe alım maliyetinin iç (İK maaşları) ve dış (reklam, ajans) bileşenlerini detaylandırır. (35. Metrik ile aynıdır)", importance: "Maliyet etkinliği analizi için gereklidir." },
+                { category: "Recruitment", id: 45, name: "Teklif Kabul Oranı (Offer acceptance rate)", formula: "Kabul Edilen Teklif Sayısı / Yapılan Toplam Teklif Sayısı", sampleData: "Örn: 4 Kabul / 5 Teklif = %80", description: "Yapılan iş tekliflerinden kaçının kabul edildiği.", importance: "Teklif rekabetçiliğini (maaş, yan haklar) ve aday deneyiminin olumlu olup olmadığını gösterir." },
+                { category: "Recruitment", id: 46, name: "Açık Pozisyon Oranı (Vacancy rate)", formula: "Toplam Açık Pozisyon Sayısı / Organizasyondaki Toplam Pozisyon Sayısı", sampleData: "Örn: 5 Açık Poz. / 55 Toplam Poz. = %9.09", description: "Toplam pozisyonlar içinde doldurulmayı bekleyenlerin oranı.", importance: "İş gücü eksikliğini ve potansiyel verimlilik kayıplarını gösterir." },
+                { category: "Recruitment", id: 47, name: "Başvuru Tamamlama Oranı (Application completion rate)", formula: "Başvuruyu Tamamlayan Kişi Sayısı / Başvuruya Başlayan Kişi Sayısı", sampleData: "Örn: 90 Tamamlanan / 100 Başlayan = %90", description: "Başvuru sürecine başlayıp tamamlayan adayların oranı.", importance: "Başvuru sisteminin kullanıcı dostu olup olmadığını ve aday deneyimini gösterir. Düşük oran, sistemde sorun olduğunu gösterir." },
+                { category: "Recruitment", id: 48, name: "Verim Oranı (Yield ratio)", formula: "Aşamayı Başarıyla Tamamlayan Başvuru Sayısı / Aşamaya Giren Toplam Başvuru Sayısı (Örnekler: 15:1, 5:1 vb.)", sampleData: "Örn: Aday Havuzu/Mülakat: 50/10 = 5:1", description: "İşe alım hunisinin (pipeline) farklı aşamalarındaki adayların bir sonraki aşamaya geçme oranı.", importance: "Hangi aşamaların darboğaz olduğunu veya en etkili seçim noktaları olduğunu belirler." },
+                { category: "Recruitment", id: 49, name: "Kaynak Kanalı Etkinliği (Sourcing channel effectiveness)", formula: "Kanalın Toplam Gösterim Sayısı / Kanalın Başvuru Sayısı", sampleData: "Örn: 10.000 Gösterim / 100 Başvuru = 100 Gösterim Başına 1 Başvuru", description: "Kanalın gösterim başına ne kadar başvuru getirdiğini ölçer.", importance: "Pazarlama bütçesinin verimli kullanılıp kullanılmadığını gösterir." },
+                { category: "Recruitment", id: 50, name: "Kaynak Kanalı Maliyeti (Sourcing channel cost)", formula: "Kanal Başına Reklam Gideri / Platform Başına Başarılı Aday Sayısı", sampleData: "Örn: 5.000 TL Reklam / 2 Başarılı Aday = 2.500 TL", description: "İşe alım kaynağının maliyetini başarılı aday sayısıyla ilişkilendirir.", importance: "En uygun maliyetli kaynak kanallarını belirlemeye yardımcı olur." },
+                { category: "Recruitment", id: 51, name: "Optimum Verimlilik Seviyesine Ulaşma Maliyeti (Cost of getting to Optimum Productivity Level - OPL)", formula: "İşe başlama + Eğitim + Denetleme + İş başı Eğitim Maliyetleri + (% OPL * Toplam İş Gücü Maliyeti) (OPL %100 olana kadar)", sampleData: "Örn: 1.000 TL (Onb.) + 500 TL (Eğit.) + 1.000 TL (Maaş Farkı) = 2.500 TL", description: "Yeni bir çalışanın tam verimlilik seviyesine ulaşması için harcanan toplam maliyet.", importance: "Uyum (onboarding) ve eğitim süreçlerinin etkinliğini ve yeni çalışanın tam katkı sağlamaya başlama süresini gösterir." },
+                
+                // 19 HR Metrics Examples PDF'inden Gelen Ek Metrikler (Var olan metriklerin detayları yukarıda birleştirildi)
+                { category: "Recruitment", id: 52, name: "İşe Alım Kalitesi (Quality of hire)", formula: "Yeni Çalışanın Performans Puanı (İlk Yıl) / Ortalama Performans Puanı", sampleData: "Örn: 4/5 Puan (Yeni Çalışan) / 3.5/5 Puan (Ort.) = 1.14 (Ortalamadan %14 daha iyi)", description: "Yeni bir çalışanın kuruluşa sağladığı değeri ölçer. Performans, hedeflere katkı ve şirkete uyum gibi kriterlere dayanır.", importance: "İşe alım sürecinin uzun vadeli etkinliğini değerlendirir. Yüksek kalite, yüksek başarıyı işaret eder." },
+                { category: "HR Performance", id: 53, name: "Ücretlendirilebilir Saatler / Çalışan (Billable hours per employee)", formula: "Toplam Ücretlendirilebilir Saatler / Toplam Çalışan Sayısı", sampleData: "Örn: 8000 Saat / 50 Çalışan = 160 Saat", description: "Özellikle profesyonel hizmet firmalarında (hukuk, danışmanlık) çalışanın faturalandırılabilir görevlere ayırdığı sürenin ölçüsüdür.", importance: "Doğrudan performansı ve çalışan kullanım oranını (utilization rate) gösterir. Yüksek oran, yüksek verimlilik anlamına gelir." },
+                { category: "General Workforce", id: 54, name: "İK Yazılımının Etkinliği (Effectiveness of HR software)", formula: "Aktif Kullanıcı Sayısı, Platformda Geçirilen Ortalama Süre, Oturum Uzunluğu, Yazılımı Elde Tutma Oranı", sampleData: "Örn: 80% Aktif Kullanıcı Oranı ve Ortalama 15 dk Oturum Süresi.", description: "Özellikle Öğrenme ve Gelişim yazılımları gibi İK sistemlerinin kullanım başarısını ölçer.", importance: "Teknoloji yatırımının geri dönüşünü (ROI) ve benimsenme düzeyini değerlendirmeye yardımcı olur." },
+                { category: "HR Performance", id: 55, name: "Liderlik Etkinliği (Leadership effectiveness)", formula: "360 Derece Geri Bildirim Puanları, Liderlik Yetkinlik Puanları, Takım Moral Değerlendirmeleri", sampleData: "Örn: Liderlik Yetkinliği için 5 üzerinden 4.2 Puan.", description: "Liderliğin, çalışan performansı, moral ve genel organizasyonel iklim üzerindeki etkisini değerlendirir.", importance: "Yönetici başarısını ve liderlik gelişim programlarının odak noktalarını belirlemek için önemlidir." },
+                { category: "HR Performance", id: 56, name: "İK İş Ortağı Oranı / Çalışan (Ratio of HR business partners per employee)", formula: "Toplam İK İş Ortağı (HRBP) Sayısı / Toplam Çalışan Sayısı", sampleData: "Örn: 1 HRBP / 150 Çalışan = 1:150", description: "İş birimlerine stratejik destek sağlamaya hazır İK İş Ortağı sayısını gösterir.", importance: "İK departmanının iş birimlerine ne kadar stratejik destek sağlayabildiğini anlamak için kritik öneme sahiptir." },
+
+            ];
+
+            // Metrik Kartını oluşturan fonksiyon
+            function createMetricCard(metric) {
+                // Kategoriye göre renk ataması
+                let colorClass = '';
+                let categoryName = '';
+                if (metric.category === 'HR Performance') {
+                    colorClass = 'border-l-indigo-500 bg-indigo-50';
+                    categoryName = 'İK Performans Metrikleri';
+                } else if (metric.category === 'General Workforce') {
+                    colorClass = 'border-l-teal-500 bg-teal-50';
+                    categoryName = 'Genel İş Gücü Metrikleri';
+                } else if (metric.category === 'Recruitment') {
+                    colorClass = 'border-l-orange-500 bg-orange-50';
+                    categoryName = 'İşe Alım Metrikleri';
+                }
+
+                return `
+                    <div class="metric-card p-6 rounded-xl shadow-md transition duration-200 hover:shadow-lg border-l-4 ${colorClass}" 
+                         data-category="${metric.category}" 
+                         data-name="${metric.name.toLowerCase()}"
+                         data-formula="${metric.formula.toLowerCase()}"
+                         data-description="${(metric.description || '').toLowerCase()}"
+                         data-importance="${(metric.importance || '').toLowerCase()}"
+                    >
+                        <div class="flex justify-between items-start mb-3">
+                            <h2 class="text-xl font-bold text-slate-800">${metric.id}. ${metric.name}</h2>
+                            <span class="text-xs font-semibold text-white px-3 py-1 rounded-full bg-slate-500">${categoryName}</span>
+                        </div>
+                        
+                        <!-- Metrik Açıklaması -->
+                        <div class="mt-4 bg-white p-4 rounded-lg border border-slate-200">
+                            <p class="text-sm font-medium text-slate-700 mb-1">Metrik Açıklaması:</p>
+                            <p class="text-base text-gray-800">${metric.description || 'Açıklama mevcut değil.'}</p>
+                        </div>
+
+                        <!-- Hesaplama Formülü -->
+                        <div class="mt-4 bg-white p-4 rounded-lg border border-slate-200">
+                            <p class="text-sm font-medium text-slate-700 mb-1">Hesaplama Formülü:</p>
+                            <p class="text-lg font-mono text-indigo-700 select-all">${metric.formula}</p>
+                        </div>
+
+                        <!-- Örnek Veri Alanı -->
+                        <div class="mt-4 bg-gray-100 p-4 rounded-lg border border-gray-300">
+                            <p class="text-sm font-medium text-slate-700 mb-1">Örnek Hesaplama:</p>
+                            <p class="text-base text-gray-800">${metric.sampleData}</p>
+                        </div>
+                        
+                        <!-- Neden Önemli Alanı -->
+                        <div class="mt-4 bg-white p-4 rounded-lg border border-slate-200 shadow-inner">
+                            <p class="text-sm font-medium text-slate-700 mb-1 text-teal-600">Neden Önemli?</p>
+                            <p class="text-base text-gray-700">${metric.importance || 'Önem bilgisi mevcut değil.'}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Metrikleri filtreleyen ve listeleyen ana fonksiyon
+            function filterMetrics() {
+                const searchInput = document.getElementById('searchInput').value.toLowerCase();
+                const categoryFilter = document.getElementById('categoryFilter').value;
+                const listContainer = document.getElementById('metricsList');
+                
+                // Konteyneri temizle
+                listContainer.innerHTML = '';
+                
+                let visibleCount = 0;
+
+                metricsData.forEach(metric => {
+                    const nameMatch = metric.name.toLowerCase().includes(searchInput);
+                    const formulaMatch = metric.formula.toLowerCase().includes(searchInput);
+                    const sampleDataMatch = metric.sampleData.toLowerCase().includes(searchInput);
+                    const descriptionMatch = (metric.description || '').toLowerCase().includes(searchInput); // Yeni alan
+                    const importanceMatch = (metric.importance || '').toLowerCase().includes(searchInput);   // Yeni alan
+                    
+                    const categoryMatch = categoryFilter === 'all' || metric.category === categoryFilter;
+
+                    if ((nameMatch || formulaMatch || sampleDataMatch || descriptionMatch || importanceMatch) && categoryMatch) {
+                        listContainer.innerHTML += createMetricCard(metric);
+                        visibleCount++;
+                    }
+                });
+                
+                // Sonuç bulunamazsa mesaj göster
+                if (visibleCount === 0) {
+                    listContainer.innerHTML = `
+                        <div class="text-center p-12 bg-white rounded-xl shadow-lg">
+                            <p class="text-2xl text-slate-500 font-semibold">
+                                Aradığınız kritere uygun metrik bulunamadı.
+                            </p>
+                            <p class="mt-2 text-slate-400">
+                                Lütfen arama teriminizi veya filtre seçiminizi kontrol edin.
+                            </p>
+                        </div>
+                    `;
+                }
+            }
+
+            // Sayfa yüklendiğinde metrikleri listele
+            window.onload = function() {
+                filterMetrics();
+            };
+        </script>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-slate-500 text-sm pb-8">
+        <p>Veriler, AIHR HR Metrics Cheat Sheet ve 19 HR Metrics Examples PDF dosyalarından alınmıştır.</p>
+    </footer>
+
+</body>
+</html>
